@@ -1,17 +1,13 @@
 module Vahana
   class Redis
     attr_reader :client
-    
-    def initialize
-      @client = ::Redis.new
-    end
 
     def class_name
       'redis'
     end
-
-    def drop
-      @client.flushall
+    
+    def initialize
+      @client = ::Redis.new
     end
 
     def seed
@@ -22,8 +18,8 @@ module Vahana
       @client.hmset("hash", "name", "John", "age", "21")
     end
 
-    def all_ids
-      @client.keys '*'
+    def drop
+      @client.flushall
     end
 
     def insert record
@@ -33,15 +29,10 @@ module Vahana
       @client.set(record.id, record.value)
     end
 
-    def delete id
-      raise ArgumentError, 'Argument id must be a string' unless id.is_a? String 
-      @client.del(id)
-    end
-
     def each
       return enum_for(:each) unless block_given?
 
-      self.all_ids.each do |id|
+      all_ids.each do |id|
         case @client.type(id)
         when 'string'
           yield Vahana::SingleRecord.new(id, @client.get(id))
@@ -64,12 +55,18 @@ module Vahana
       end
     end
 
+
+    private
+
+    def all_ids
+      @client.keys '*'
+    end
+
     def record_for_mongo record
       record.namespace = 'redis'
       record.value = {value: record.value}
       return record
     end
+
   end
 end
-
-# Vahana::Redis.new.transfer_all_to Vahana::Mongo.new('db')

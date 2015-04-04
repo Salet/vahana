@@ -21,12 +21,6 @@ class RedisTest < Minitest::Test
     assert_raises(ArgumentError) { @client.insert('test', 'key') }
   end
 
-  def test_delete
-    @client.insert(Vahana::SingleRecord.new('test', 'test'))
-    assert_equal @client.delete('test'), 1
-    assert_raises(ArgumentError) { @client.delete([]) }
-  end
-
   def test_drop
     @client.drop
     assert_empty @client.all_ids
