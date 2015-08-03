@@ -12,7 +12,12 @@ module Vahana
     end   
 
     def seed
-      raise NotImplementedError
+      @client.database.collection('users').insert_one({ _id: 1, first_name: 'John', last_name: 'Snow' })
+      @client.database.collection('users').insert_one({ _id: 2, first_name: 'Stannis', last_name: 'Baratheon' })
+      @client.database.collection('users').insert_one({ _id: 3, first_name: 'Jaime', last_name: 'Lannister' })
+      @client.database.collection('cities').insert_one({ _id: 1, name: 'Winterfell' })
+      @client.database.collection('cities').insert_one({ _id: 2, name: 'King\'s Landing' })
+      @client.database.collection('cities').insert_one({ _id: 3, name: 'Braavos' })
     end 
 
     def drop
