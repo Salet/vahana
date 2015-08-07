@@ -2,6 +2,20 @@ module Vahana
   module Cli
     class Application < Thor
 
+      @@databases = %w(redis mongo cassandra neo4j)
+
+      map %w[--version -v] => :__print_version
+      desc "-v, --version", "Check gem version"
+      def __print_version
+        puts "vahana #{Vahana::VERSION}"
+      end
+
+      desc 'list', 'Shows compatible database names'
+      def list
+        puts "Compatible databases are:"
+        puts @@databases
+      end
+
       desc 'prepare', 'Drops data from all databases. Use with care!'
       def prepare
         Vahana::Redis.new.drop
@@ -29,8 +43,10 @@ module Vahana
           say 'Done!'
         rescue NoMethodError
           say "WARNING: This migration is not implemented yet."
+          #puts $!
         rescue NameError
-          say "ERROR: Provided source or target is not supported. Compatible databases are: redis, mongo, cassandra, neo4j."
+          say "ERROR: Provided source or target is not supported."
+          list
         end
       end
 

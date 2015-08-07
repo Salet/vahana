@@ -39,7 +39,7 @@ module Vahana
         @client[collection].find.each do |document|
           hash = document.to_h
           value_hash = hash.reject{|k| k == '_id'}
-          yield Vahana::SingleRecord.new("#{collection}.#{hash['_id'].to_s}", value_hash)
+          yield Vahana::SingleRecord.new("#{hash['_id'].to_s}", value_hash, collection)
         end
       end
     end

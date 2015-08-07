@@ -26,24 +26,34 @@ module Vahana
       raise ArgumentError, 'Record must be a SingleRecord' unless record.is_a? SingleRecord 
       raise ArgumentError, 'Record id must be a string' unless record.id.is_a? String 
       raise ArgumentError, 'Record value must be a string' unless record.value.is_a? String 
-      @client.set(record.id, record.value)
+      @client.set([record.namespace, record.id].join(':'), record.value)
     end
 
     def each
       return enum_for(:each) unless block_given?
 
-      all_ids.each do |id|
-        case @client.type(id)
+      all_ids.each do |key|
+
+        key_array = key.split(':')  
+        if key_array.length > 1
+          namespace = key_array.first
+          id        = key_array[1..-1].join(':')
+        else
+          namespace = nil
+          id        = key
+        end
+
+        case @client.type(key)
         when 'string'
-          yield Vahana::SingleRecord.new(id, @client.get(id))
+          yield Vahana::SingleRecord.new(id, @client.get(key), namespace)
         when 'hash'
-          yield Vahana::SingleRecord.new(id, @client.hgetall(id))
+          yield Vahana::SingleRecord.new(id, @client.hgetall(key), namespace)
         when 'list'
-          yield Vahana::SingleRecord.new(id, @client.lrange(id, 0, -1))
+          yield Vahana::SingleRecord.new(id, @client.lrange(key, 0, -1), namespace)
         when 'set'
-          yield Vahana::SingleRecord.new(id, @client.smembers(id))
+          yield Vahana::SingleRecord.new(id, @client.smembers(key), namespace)
         when 'zset'
-          yield Vahana::SingleRecord.new(id, @client.zrange(id, 0, -1, { withscores: true }).map { |v| Hash[['_id', 'score'].zip(v)] })
+          yield Vahana::SingleRecord.new(id, @client.zrange(key, 0, -1, { withscores: true }).map { |v| Hash[['_id', 'score'].zip(v)] }, namespace)
         end
       end
     end
@@ -63,7 +73,7 @@ module Vahana
     end
 
     def record_for_mongo record
-      record.namespace = 'redis'
+      record.namespace ||= 'redis'
       record.value = {value: record.value}
       return record
     end
