@@ -26,9 +26,9 @@ module Vahana
 
     def insert record
       raise ArgumentError, 'Record must be a SingleRecord' unless record.is_a? SingleRecord 
-      raise ArgumentError, 'Record id is must be a string' unless record.id.is_a? String 
+      raise ArgumentError, 'Record id must be a string' unless record.id.is_a? String 
       raise ArgumentError, 'Record value must be a hash' unless record.value.is_a? Hash 
-      raise ArgumentError, 'Record namespace is must be a string' unless record.namespace.is_a? String 
+      raise ArgumentError, 'Record namespace must be a string' unless record.namespace.is_a? String 
       @client[record.namespace].insert_one({_id: record.id}.merge(record.value))
     end
 

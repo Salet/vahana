@@ -11,34 +11,37 @@ module Vahana
     end   
 
     def seed
-      @client.database.collection('users').insert_one({ _id: 1, first_name: 'John', last_name: 'Snow' })
-      @client.database.collection('users').insert_one({ _id: 2, first_name: 'Stannis', last_name: 'Baratheon' })
-      @client.database.collection('users').insert_one({ _id: 3, first_name: 'Jaime', last_name: 'Lannister' })
-      @client.database.collection('cities').insert_one({ _id: 1, name: 'Winterfell' })
-      @client.database.collection('cities').insert_one({ _id: 2, name: 'King\'s Landing' })
-      @client.database.collection('cities').insert_one({ _id: 3, name: 'Braavos' })
+      @client.execute("create table #{@client.keyspace}.users (id uuid primary key, first_name text, last_name text)")
+      @client.execute("insert into #{@client.keyspace}.users (id, first_name, last_name) values (uuid(), 'John', 'Snow')")
+      @client.execute("insert into #{@client.keyspace}.users (id, first_name, last_name) values (uuid(), 'Stannis', 'Baratheon')")
+      @client.execute("insert into #{@client.keyspace}.users (id, first_name, last_name) values (uuid(), 'Jaime', 'Lannister')")
+
+      @client.execute("create table #{@client.keyspace}.cities (id uuid primary key, name text)")
+      @client.execute("insert into #{@client.keyspace}.cities (id, name) values (uuid(), 'Winterfell')")
+      @client.execute("insert into #{@client.keyspace}.cities (id, name) values (uuid(), 'Kings Landing')")
+      @client.execute("insert into #{@client.keyspace}.cities (id, name) values (uuid(), 'Braavos')")
     end 
 
     def drop
-      @client.database.drop
+      all_tables.each do |table|
+        @client.execute("drop table #{table}")
+      end
     end    
 
     def insert record
       raise ArgumentError, 'Record must be a SingleRecord' unless record.is_a? SingleRecord 
-      raise ArgumentError, 'Record id is must be a string' unless record.id.is_a? String 
+      raise ArgumentError, 'Record id must be a string' unless record.id.is_a? String 
       raise ArgumentError, 'Record value must be a hash' unless record.value.is_a? Hash 
-      raise ArgumentError, 'Record namespace is must be a string' unless record.namespace.is_a? String 
+      raise ArgumentError, 'Record namespace must be a string' unless record.namespace.is_a? String 
       @client[record.namespace].insert_one({_id: record.id}.merge(record.value))
     end
 
     def each
       return enum_for(:each) unless block_given?
 
-      all_collections.each do |collection|
-        @client[collection].find.each do |document|
-          hash = document.to_h
-          value_hash = hash.reject{|k| k == '_id'}
-          yield Vahana::SingleRecord.new("#{hash['_id'].to_s}", value_hash, collection)
+      all_tables.each do |table|
+        @client.execute("select * from #{@client.keyspace}.#{table}").rows.each do |row|
+          yield Vahana::SingleRecord.new(row.delete(row.first[0]).to_s, row, table)
         end
       end
     end
@@ -59,6 +62,10 @@ module Vahana
         a << row["columnfamily_name"]
       end
       return a
+    end
+
+    def record_for_mongo record
+      return record
     end
 
   end
