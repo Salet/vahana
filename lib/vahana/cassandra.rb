@@ -7,19 +7,19 @@ module Vahana
     end
 
     def initialize keyspace = 'app'
-      @client = ::Cassandra.cluster.connect(keyspace)   
+      @client = ::Cassandra.cluster.connect(keyspace)
     end   
 
     def seed
-      @client.execute("create table #{@client.keyspace}.users (id uuid primary key, first_name text, last_name text)")
-      @client.execute("insert into #{@client.keyspace}.users (id, first_name, last_name) values (uuid(), 'John', 'Snow')")
-      @client.execute("insert into #{@client.keyspace}.users (id, first_name, last_name) values (uuid(), 'Stannis', 'Baratheon')")
-      @client.execute("insert into #{@client.keyspace}.users (id, first_name, last_name) values (uuid(), 'Jaime', 'Lannister')")
+      @client.execute("create table users (id uuid primary key, first_name text, last_name text)")
+      @client.execute("insert into users (id, first_name, last_name) values (uuid(), 'John', 'Snow')")
+      @client.execute("insert into users (id, first_name, last_name) values (uuid(), 'Stannis', 'Baratheon')")
+      @client.execute("insert into users (id, first_name, last_name) values (uuid(), 'Jaime', 'Lannister')")
 
-      @client.execute("create table #{@client.keyspace}.cities (id uuid primary key, name text)")
-      @client.execute("insert into #{@client.keyspace}.cities (id, name) values (uuid(), 'Winterfell')")
-      @client.execute("insert into #{@client.keyspace}.cities (id, name) values (uuid(), 'Kings Landing')")
-      @client.execute("insert into #{@client.keyspace}.cities (id, name) values (uuid(), 'Braavos')")
+      @client.execute("create table cities (id uuid primary key, name text)")
+      @client.execute("insert into cities (id, name) values (uuid(), 'Winterfell')")
+      @client.execute("insert into cities (id, name) values (uuid(), 'Kings Landing')")
+      @client.execute("insert into cities (id, name) values (uuid(), 'Braavos')")
     end 
 
     def drop
@@ -37,10 +37,10 @@ module Vahana
       unless all_tables.include? record.namespace
         key_names = record.value.keys.map { |k| "#{k} text" }
         key_names.first.replace(key_names.first + ' primary key')
-        @client.execute("create table #{@client.keyspace}.#{record.namespace} (#{key_names.join(', ')})")
+        @client.execute("create table #{record.namespace} (#{key_names.join(', ')})")
       end
 
-      @client.execute("insert into #{@client.keyspace}.#{record.namespace} (#{record.value.keys.join(', ')}) 
+      @client.execute("insert into #{record.namespace} (#{record.value.keys.join(', ')}) 
                        values (#{record.value.values.map {|v| "'#{v}'"}.join(', ')})")
     end
 
@@ -48,7 +48,7 @@ module Vahana
       return enum_for(:each) unless block_given?
 
       all_tables.each do |table|
-        @client.execute("select * from #{@client.keyspace}.#{table}").rows.each do |row|
+        @client.execute("select * from #{table}").rows.each do |row|
           yield Vahana::SingleRecord.new(row.delete(row.first[0]).to_s, row, table)
         end
       end
