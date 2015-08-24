@@ -78,5 +78,11 @@ module Vahana
       return record
     end
 
+    def record_for_cassandra record
+      record.namespace ||= 'redis'
+      record.value = {id: record.id, value: record.value}
+      return record
+    end
+
   end
 end

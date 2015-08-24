@@ -33,7 +33,15 @@ module Vahana
       raise ArgumentError, 'Record id must be a string' unless record.id.is_a? String 
       raise ArgumentError, 'Record value must be a hash' unless record.value.is_a? Hash 
       raise ArgumentError, 'Record namespace must be a string' unless record.namespace.is_a? String 
-      @client[record.namespace].insert_one({_id: record.id}.merge(record.value))
+
+      unless all_tables.include? record.namespace
+        key_names = record.value.keys.map { |k| "#{k} text" }
+        key_names.first.replace(key_names.first + ' primary key')
+        @client.execute("create table #{@client.keyspace}.#{record.namespace} (#{key_names.join(', ')})")
+      end
+
+      @client.execute("insert into #{@client.keyspace}.#{record.namespace} (#{record.value.keys.join(', ')}) 
+                       values (#{record.value.values.map {|v| "'#{v}'"}.join(', ')})")
     end
 
     def each

@@ -20,8 +20,7 @@ module Vahana
       def prepare
         Vahana::Redis.new.drop
         Vahana::Mongo.new.drop
-        Vahana::Redis.new.drop
-        Vahana::Redis.new.drop
+        Vahana::Cassandra.new.drop
       end
 
       desc 'seed TARGET', 'Seeds TARGET database with test data.'
@@ -43,7 +42,7 @@ module Vahana
           say 'Done!'
         rescue NoMethodError
           say "WARNING: This migration is not implemented yet."
-          #puts $!
+          puts $!
         rescue NameError
           say "ERROR: Provided source or target is not supported."
           list
