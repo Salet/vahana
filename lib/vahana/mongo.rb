@@ -6,7 +6,7 @@ module Vahana
       'mongo'
     end
 
-    def initialize db = 'db'
+    def initialize db = 'test'
       ::Mongo::Logger.logger.level = ::Logger::INFO
       @client = ::Mongo::Client.new([ '127.0.0.1:27017' ], database: db)      
     end   
